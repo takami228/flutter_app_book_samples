@@ -1,61 +1,35 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(MaterialApp(title: 'Navigation', home: HomeScreen()));
+void main() => runApp(MaterialApp(title: 'Navigation', home: MainScreen()));
 
-class HomeScreen extends StatelessWidget {
+class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
-        title: Text('Demo'),
+        title: Text('Main Screen'),
       ),
-      body: Center(child: SelectionButton()));
+      body: GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context, MaterialPageRoute(builder: (_) => DetailScreen()));
+          },
+          child: Center(
+            child: Hero(
+                tag: 'imageHero',
+                child: Image.network('https://picsum.photos/250?image=9')),
+          )));
 }
 
-class SelectionButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => RaisedButton(
-      onPressed: () {
-        _navigateAndDisplaySelection(context);
-      },
-      child: Text('オプションを選択'));
-}
-
-class SelectionScreen extends StatelessWidget {
+class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Text('選択してください'),
-        ),
-        body: Center(
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: RaisedButton(
-                  onPressed: () {
-                    Navigator.pop(context, '選択肢1');
-                  },
-                  child: Text('選択肢1')),
-            ),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: RaisedButton(
-                  onPressed: () {
-                    Navigator.pop(context, '選択肢2');
-                  },
-                  child: Text('選択肢2')),
-            ),
-          ],
-        )),
-      );
-}
-
-Future<void> _navigateAndDisplaySelection(BuildContext context) async {
-  final result = await Navigator.push(
-      context, MaterialPageRoute(builder: (context) => SelectionScreen()));
-
-  Scaffold.of(context)
-    ..removeCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(result)));
+      body: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Center(
+            child: Hero(
+                tag: 'imageHero',
+                child: Image.network('https://picsum.photos/250?image=9')),
+          )));
 }
