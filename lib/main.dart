@@ -1,180 +1,87 @@
+import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(MaterialApp(
-      title: 'Navigation',
-      home: Scaffold(
-        appBar: AppBar(title: Text('TapBox')),
-        body: Center(
-          //子で管理するパターン
-          //child: TapBoxA(),
-          //親で管理するパターン
-          //child: ParentWidget(),
-          //親で管理するパターン
-          child: ParentChildrenWidget(),
-        ),
-      ),
-    ));
+void main() => runApp(MyApp());
 
-//ウィジェット自身が状態を管理するパターン
-class TapBoxA extends StatefulWidget {
+class MyApp extends StatelessWidget {
   @override
-  _TapBoxAState createState() => _TapBoxAState();
+  Widget build(BuildContext context) => MaterialApp(home: LogoApp());
 }
 
-class _TapBoxAState extends State<TapBoxA> {
-  bool _active = false;
+class LogoApp extends StatefulWidget {
+  @override
+  _LogoAppState createState() => _LogoAppState();
+}
+
+class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
+  AnimationController controller;
+  Animation<double> animation;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-      onTap: _handleTap,
-      child: Container(
-        child: Center(
-            child: Text(
-          _active ? 'Active' : 'Inactive',
-          style: TextStyle(fontSize: 32.0, color: Colors.white),
-        )),
-        width: 200.0,
-        height: 200.0,
-        decoration: BoxDecoration(
-          color: _active ? Colors.lightGreen[700] : Colors.grey[600],
-        ),
-      ));
+  void initState() {
+    super.initState();
+    controller =
+        AnimationController(duration: Duration(seconds: 2), vsync: this)
+          ..addStatusListener(_onAnimationStatusChanged);
+    animation = Tween<double>(begin: 0.1, end: 1.0).animate(controller);
+    controller.forward();
+  }
 
-  void _handleTap() {
-    setState(() {
-      _active = !_active;
-    });
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => GrowTransition(
+        animation: animation,
+        child: LogoWidget(),
+      );
+
+  void _onAnimationStatusChanged(AnimationStatus status) {
+    switch (status) {
+      case AnimationStatus.completed:
+        controller.reverse();
+        break;
+      case AnimationStatus.dismissed:
+        controller.forward();
+        break;
+      default:
+    }
   }
 }
 
-//親ウィジェットが状態を管理するパターン
-class ParentWidget extends StatefulWidget {
-  @override
-  _ParentWidgetState createState() => _ParentWidgetState();
-}
+class GrowTransition extends StatelessWidget {
+  static final _sizeTween = Tween<double>(begin: 0, end: 300);
 
-class _ParentWidgetState extends State<ParentWidget> {
-  bool _active = false;
-
-  @override
-  Widget build(BuildContext context) => Container(
-      // 親が管理するパターン
-      child: TapBoxB(active: _active, onChanged: _handleTapBoxChanged));
-
-  //child: TapBoxC(active: _active, onChanged: _handleTapBoxChanged));
-
-  void _handleTapBoxChanged(bool newValue) {
-    setState(() {
-      _active = newValue;
-    });
-  }
-}
-
-class TapBoxB extends StatelessWidget {
-  TapBoxB({Key key, this.active: false, @required this.onChanged})
-      : assert(active != false),
-        assert(onChanged != null),
+  GrowTransition({Key key, this.child, this.animation})
+      : assert(child != null),
+        assert(animation != null),
         super(key: key);
 
-  final bool active;
-  final ValueChanged<bool> onChanged;
+  final Widget child;
+  final Animation<double> animation;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-      onTap: _handleTap,
-      child: Container(
-        child: Center(
-            child: Text(
-          active ? 'Active' : 'Inactive',
-          style: TextStyle(fontSize: 32.0, color: Colors.white),
-        )),
-        width: 200.0,
-        height: 200.0,
-        decoration: BoxDecoration(
-          color: active ? Colors.lightGreen[700] : Colors.grey[600],
-        ),
-      ));
-
-  void _handleTap() {
-    onChanged(!active);
-  }
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+            child: AnimatedBuilder(
+                animation: animation,
+                child: child,
+                builder: (context, child) => Opacity(
+                    opacity: animation.value,
+                    child: Container(
+                        height: _sizeTween.evaluate(animation),
+                        width: _sizeTween.evaluate(animation),
+                        child: child)))),
+      );
 }
 
-//親と子の両方で管理するケース
-class ParentChildrenWidget extends StatefulWidget {
-  @override
-  _ParentChildrenWidgetState createState() => _ParentChildrenWidgetState();
-}
-
-class _ParentChildrenWidgetState extends State<ParentChildrenWidget> {
-  bool _active = false;
-
+class LogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-      child: TapBoxC(active: _active, onChanged: _handleTapBoxChanged));
-
-  void _handleTapBoxChanged(bool newValue) {
-    setState(() {
-      _active = newValue;
-    });
-  }
-}
-
-class TapBoxC extends StatefulWidget {
-  TapBoxC({Key key, this.active: false, @required this.onChanged})
-      : super(key: key);
-
-  final bool active;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  _TapBoxCState createState() => _TapBoxCState();
-}
-
-class _TapBoxCState extends State<TapBoxC> {
-  bool _highlight = false;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      onTap: _handleTap,
-      child: Container(
-        child: Center(
-            child: Text(
-          widget.active ? 'Active' : 'Inactive',
-          style: TextStyle(fontSize: 32.0, color: Colors.white),
-        )),
-        width: 200.0,
-        height: 200.0,
-        decoration: BoxDecoration(
-          color: widget.active ? Colors.lightGreen[700] : Colors.grey[600],
-          border: _highlight
-              ? Border.all(color: Colors.teal[700], width: 10.0)
-              : null,
-        ),
-      ));
-
-  void _handleTapDown(TapDownDetails details) {
-    setState(() {
-      _highlight = true;
-    });
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    setState(() {
-      _highlight = false;
-    });
-  }
-
-  void _handleTapCancel() {
-    setState(() {
-      _highlight = false;
-    });
-  }
-
-  void _handleTap() {
-    widget.onChanged(!widget.active);
-  }
+        margin: EdgeInsets.symmetric(vertical: 10),
+        child: FlutterLogo(),
+      );
 }
